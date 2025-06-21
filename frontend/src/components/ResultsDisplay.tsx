@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeftIcon, ChevronRightIcon, SparklesIcon, DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { AnalysisResponse, getImageUrl } from '../services/api';
 import toast from 'react-hot-toast';
+import PlatformPostModal from './PlatformPostModal';
 
 interface ResultsDisplayProps {
   results: AnalysisResponse;
@@ -12,6 +13,8 @@ interface ResultsDisplayProps {
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<'craigslist' | 'ebay' | 'facebook'>('craigslist');
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -34,6 +37,26 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
     setCurrentImageIndex((prev) => 
       prev === 0 ? results.enhanced_images.length - 1 : prev - 1
     );
+  };
+
+  const openPlatformModal = (platform: 'craigslist' | 'ebay' | 'facebook') => {
+    setSelectedPlatform(platform);
+    setModalOpen(true);
+  };
+
+  const getPlatformListing = (platform: 'craigslist' | 'ebay' | 'facebook') => {
+    const platformData = results.platform_listings?.[platform];
+    if (platformData) {
+      return {
+        title: platformData.title,
+        description: platformData.description
+      };
+    }
+    // Fallback to general listing
+    return {
+      title: results.listing.title,
+      description: results.listing.description
+    };
   };
 
   return (
@@ -275,6 +298,55 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
         </div>
       </motion.div>
 
+      {/* Platform Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="glass rounded-lg p-6 mb-8"
+      >
+        <h3 className="text-2xl font-cyber font-bold mb-6 text-center">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-purple to-cyber-pink">
+            Ready to Sell? Push to Your Platform
+          </span>
+        </h3>
+        
+        <div className="grid md:grid-cols-3 gap-4">
+          <button
+            onClick={() => openPlatformModal('craigslist')}
+            className="group relative overflow-hidden rounded-lg p-6 bg-gradient-to-r from-purple-600/20 to-purple-800/20 border-2 border-purple-500/30 hover:border-purple-500 transition-all duration-300 hover:scale-105"
+          >
+            <div className="relative z-10">
+              <h4 className="text-xl font-bold mb-2">Craigslist</h4>
+              <p className="text-sm text-gray-400">Local sales, cash deals</p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-800 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          </button>
+          
+          <button
+            onClick={() => openPlatformModal('facebook')}
+            className="group relative overflow-hidden rounded-lg p-6 bg-gradient-to-r from-blue-600/20 to-blue-800/20 border-2 border-blue-500/30 hover:border-blue-500 transition-all duration-300 hover:scale-105"
+          >
+            <div className="relative z-10">
+              <h4 className="text-xl font-bold mb-2">Facebook</h4>
+              <p className="text-sm text-gray-400">Marketplace visibility</p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          </button>
+          
+          <button
+            onClick={() => openPlatformModal('ebay')}
+            className="group relative overflow-hidden rounded-lg p-6 bg-gradient-to-r from-blue-600/20 to-yellow-600/20 border-2 border-yellow-500/30 hover:border-yellow-500 transition-all duration-300 hover:scale-105"
+          >
+            <div className="relative z-10">
+              <h4 className="text-xl font-bold mb-2">eBay</h4>
+              <p className="text-sm text-gray-400">Auction or buy now</p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-yellow-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          </button>
+        </div>
+      </motion.div>
+
       {/* Action Button */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -289,6 +361,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
           Analyze Another Item
         </button>
       </motion.div>
+
+      {/* Platform Post Modal */}
+      <PlatformPostModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        platform={selectedPlatform}
+        title={getPlatformListing(selectedPlatform).title}
+        description={getPlatformListing(selectedPlatform).description}
+        price={results.listing.suggested_price}
+        imageUrls={results.enhanced_images.map(img => getImageUrl(img.url.replace('/image/', '')))}
+      />
     </motion.div>
   );
 };

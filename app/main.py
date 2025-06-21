@@ -65,6 +65,7 @@ async def process_item(
     file: UploadFile = File(...),
     enhancement_mode: str = Form("quick"),
     custom_prompts: Optional[str] = Form(None),
+    real_mode: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     """Process an item image and generate a complete listing."""
@@ -100,7 +101,8 @@ async def process_item(
             portfolio = await smart_generator.generate_listing_portfolio(
                 image_data,
                 item_analysis,
-                enhancement_mode="smart"
+                enhancement_mode="smart",
+                real_mode=real_mode
             )
             enhanced_images = portfolio["generated_images"]
             
@@ -145,7 +147,7 @@ async def process_item(
         
         # Step 5: Generate listing content for all platforms
         listing_content = await generator.generate_listing(
-            item_analysis, price_data, market_insights
+            item_analysis, price_data, market_insights, real_mode=real_mode
         )
         
         # Generate platform-specific versions
@@ -154,7 +156,7 @@ async def process_item(
         
         for platform in platforms:
             platform_listing = await generator.generate_platform_listing(
-                item_analysis, price_data, market_insights, platform
+                item_analysis, price_data, market_insights, platform, real_mode=real_mode
             )
             platform_listings[platform] = platform_listing
         

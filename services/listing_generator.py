@@ -10,11 +10,12 @@ class ListingGenerator:
     async def generate_listing(self, 
                              item_data: Dict[str, Any], 
                              price_data: Dict[str, Any],
-                             market_insights: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                             market_insights: Optional[Dict[str, Any]] = None,
+                             real_mode: bool = False) -> Dict[str, Any]:
         """Generate complete listing with title, description, and keywords."""
         
         # Generate the listing content
-        listing_text = await self.client.generate_listing(item_data, price_data)
+        listing_text = await self.client.generate_listing(item_data, price_data, real_mode=real_mode)
         
         # Parse the generated text
         parsed = self._parse_listing_text(listing_text)
@@ -161,10 +162,11 @@ Keywords: {', '.join(listing['keywords'][:5])}
                                       item_data: Dict[str, Any], 
                                       price_data: Dict[str, Any],
                                       market_insights: Optional[Dict[str, Any]],
-                                      platform: str) -> Dict[str, Any]:
+                                      platform: str,
+                                      real_mode: bool = False) -> Dict[str, Any]:
         """Generate a platform-specific listing."""
         # First generate the base listing
-        base_listing = await self.generate_listing(item_data, price_data, market_insights)
+        base_listing = await self.generate_listing(item_data, price_data, market_insights, real_mode)
         
         # Return the platform-specific version
         if platform == "ebay":

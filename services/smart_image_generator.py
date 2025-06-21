@@ -29,6 +29,7 @@ class SmartImageGenerator:
         item_analysis: Dict[str, Any],
         enhancement_mode: str = "smart",
         progress_callback=None,
+        real_mode: bool = False,
     ) -> Dict[str, Any]:
         """Generate a complete portfolio of listing images."""
 
@@ -83,7 +84,7 @@ class SmartImageGenerator:
                     clean_image_data if clean_image_data else original_image
                 )
                 marketing_result = await self.generate_marketing_portfolio(
-                    marketing_source, item_analysis
+                    marketing_source, item_analysis, real_mode=real_mode, progress_callback=update_progress
                 )
 
                 # Add marketing images to results
@@ -393,11 +394,11 @@ Make it ABSURDLY specific and viral-worthy!"""
                 os.remove(temp_path)
 
     async def generate_marketing_portfolio(
-        self, original_image: bytes, item_analysis: Dict[str, Any]
+        self, original_image: bytes, item_analysis: Dict[str, Any], real_mode: bool = False, progress_callback=None
     ) -> Dict[str, Any]:
-        """Generate 5 ultra-memey marketing images for peak AI slop aesthetic."""
+        """Generate 5 marketing images - either meme-worthy or professional based on mode."""
 
-        print("[DEBUG] Starting marketing portfolio generation")
+        print(f"[DEBUG] Starting marketing portfolio generation (real_mode={real_mode})")
 
         # Convert image to base64 for OpenAI
         base64_image = self._encode_image(original_image)
@@ -405,39 +406,68 @@ Make it ABSURDLY specific and viral-worthy!"""
         # Get meme prompts from OpenAI
         try:
             marketing_prompts = await self.openai_client.generate_marketing_prompts(
-                item_analysis, base64_image
+                item_analysis, base64_image, real_mode=real_mode
             )
             print(f"[DEBUG] Generated {len(marketing_prompts)} marketing prompts")
         except Exception as e:
             print(f"[DEBUG] Error generating prompts: {str(e)}")
-            # Use fallback prompts
-            marketing_prompts = [
-                {
-                    "title": "Grindset Mindset",
-                    "prompt": f"{item_analysis['item_name']} floating in space with explosions, dramatic lighting, 'SUCCESS' text in flames, 8k hyperrealistic",
-                    "style": "motivational",
-                },
-                {
-                    "title": "Apocalypse Mode",
-                    "prompt": f"Person using {item_analysis['item_name']} during zombie apocalypse, determined expression, sunrise through ruins, dramatic composition",
-                    "style": "apocalyptic",
-                },
-                {
-                    "title": "Quantum Dimension",
-                    "prompt": f"{item_analysis['item_name']} creating portal to another dimension, swirling colors, impossible physics, cinematic lighting",
-                    "style": "surreal",
-                },
-                {
-                    "title": "Celebrity Chaos",
-                    "prompt": f"Famous person dramatically using {item_analysis['item_name']}, paparazzi in background, luxury setting, chaos ensuing",
-                    "style": "celebrity",
-                },
-                {
-                    "title": "Epic Battle",
-                    "prompt": f"{item_analysis['item_name']} in medieval battle scene, knights cheering, dragon in background, epic movie poster style",
-                    "style": "cinematic",
-                },
-            ]
+            # Use fallback prompts based on mode
+            if real_mode:
+                marketing_prompts = [
+                    {
+                        "title": "Professional Studio Shot",
+                        "prompt": f"{item_analysis['item_name']} on white background, professional product photography, studio lighting, high resolution, clean and minimal",
+                        "style": "studio",
+                    },
+                    {
+                        "title": "Lifestyle Context",
+                        "prompt": f"{item_analysis['item_name']} in modern home setting, natural lighting, tasteful decor, showing actual use case",
+                        "style": "lifestyle",
+                    },
+                    {
+                        "title": "Feature Highlight",
+                        "prompt": f"Close-up detail shot of {item_analysis['item_name']}, showing quality and craftsmanship, macro photography style",
+                        "style": "detail",
+                    },
+                    {
+                        "title": "Comparison View",
+                        "prompt": f"{item_analysis['item_name']} shown from multiple angles, clean composition, showing all sides and features",
+                        "style": "multi-angle",
+                    },
+                    {
+                        "title": "Scale Reference",
+                        "prompt": f"{item_analysis['item_name']} with common objects for size reference, clean background, professional presentation",
+                        "style": "scale",
+                    },
+                ]
+            else:
+                marketing_prompts = [
+                    {
+                        "title": "Grindset Mindset",
+                        "prompt": f"{item_analysis['item_name']} floating in space with explosions, dramatic lighting, 'SUCCESS' text in flames, 8k hyperrealistic",
+                        "style": "motivational",
+                    },
+                    {
+                        "title": "Apocalypse Mode",
+                        "prompt": f"Person using {item_analysis['item_name']} during zombie apocalypse, determined expression, sunrise through ruins, dramatic composition",
+                        "style": "apocalyptic",
+                    },
+                    {
+                        "title": "Quantum Dimension",
+                        "prompt": f"{item_analysis['item_name']} creating portal to another dimension, swirling colors, impossible physics, cinematic lighting",
+                        "style": "surreal",
+                    },
+                    {
+                        "title": "Celebrity Chaos",
+                        "prompt": f"Famous person dramatically using {item_analysis['item_name']}, paparazzi in background, luxury setting, chaos ensuing",
+                        "style": "celebrity",
+                    },
+                    {
+                        "title": "Epic Battle",
+                        "prompt": f"{item_analysis['item_name']} in medieval battle scene, knights cheering, dragon in background, epic movie poster style",
+                        "style": "cinematic",
+                    },
+                ]
 
         # Generate all marketing images
         results = []
@@ -447,6 +477,9 @@ Make it ABSURDLY specific and viral-worthy!"""
         for i in range(0, len(marketing_prompts), 2):
             batch = marketing_prompts[i : i + 2]
             batch_tasks = []
+            
+            if progress_callback:
+                progress_callback(f"Generating images {i+1}-{min(i+2, len(marketing_prompts))} of {len(marketing_prompts)}...")
 
             for prompt_data in batch:
                 # Create a structured prompt for the image generator

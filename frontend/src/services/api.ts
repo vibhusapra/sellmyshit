@@ -9,6 +9,7 @@ const api = axios.create({
   },
 });
 
+
 export interface ItemAnalysis {
   item_name: string;
   category: string;
@@ -64,6 +65,8 @@ export interface PlatformListing {
   keywords?: string[];
   category_suggestions?: string[];
   pricing_note?: string;
+  item_specifics?: Record<string, string>;
+  category?: string;
 }
 
 export interface ListingContent {
@@ -106,11 +109,13 @@ export interface ListingsResponse {
 export const processItem = async (
   file: File,
   enhancementMode: 'smart' | 'quick' | 'custom' = 'quick',
-  customPrompts?: string[]
+  customPrompts?: string[],
+  realMode: boolean = false
 ): Promise<AnalysisResponse> => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('enhancement_mode', enhancementMode);
+  formData.append('real_mode', realMode.toString());
   
   if (customPrompts && customPrompts.length > 0) {
     formData.append('custom_prompts', JSON.stringify(customPrompts));
@@ -124,6 +129,7 @@ export const processItem = async (
 
   return response.data;
 };
+
 
 export const generateImages = async (
   file: File,

@@ -101,10 +101,37 @@ class OpenAIClient:
             "key_features": []
         }
     
-    async def generate_listing(self, item_data: Dict[str, Any], price_data: Dict[str, Any]) -> str:
-        """Generate optimized listing description using GPT-4."""
+    async def generate_listing(self, item_data: Dict[str, Any], price_data: Dict[str, Any], real_mode: bool = False) -> str:
+        """Generate optimized listing description using GPT-4 - professional or fun based on mode."""
         
-        prompt = f"""Create a compelling product listing description for online marketplaces.
+        if real_mode:
+            prompt = f"""Create a professional, honest product listing for online marketplaces.
+
+Item Details:
+{json.dumps(item_data, indent=2)}
+
+Price Research:
+Average Price: ${price_data.get('avg_price', 'N/A')}
+Price Range: ${price_data.get('min_price', 'N/A')} - ${price_data.get('max_price', 'N/A')}
+
+Create a listing that includes:
+1. Clear, descriptive title (max 80 characters) - be specific about the item
+2. Honest, detailed description with actual features and specifications
+3. Accurate condition details with any flaws mentioned
+4. Professional tone - no hype or exaggeration
+5. Relevant keywords for search optimization
+
+Focus on accuracy and building trust with potential buyers.
+
+Format the response as:
+TITLE: [title here]
+
+DESCRIPTION:
+[full description here]
+
+KEYWORDS: [comma-separated keywords]"""
+        else:
+            prompt = f"""Create a compelling product listing description for online marketplaces.
 
 Item Details:
 {json.dumps(item_data, indent=2)}
@@ -128,12 +155,18 @@ DESCRIPTION:
 
 KEYWORDS: [comma-separated keywords]"""
         
+        system_message = (
+            "You are a professional marketplace expert who creates honest, accurate listings that build trust and sell effectively. Focus on clear communication and accurate descriptions."
+            if real_mode else
+            "You are an expert at creating compelling product listings that sell. You understand SEO and marketplace best practices."
+        )
+        
         response = self.client.chat.completions.create(
             model=settings.openai_model,
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at creating compelling product listings that sell. You understand SEO and marketplace best practices."
+                    "content": system_message
                 },
                 {
                     "role": "user",
@@ -141,15 +174,43 @@ KEYWORDS: [comma-separated keywords]"""
                 }
             ],
             max_tokens=1024,
-            temperature=1
+            temperature=0.7 if real_mode else 1.0
         )
         
         return response.choices[0].message.content
     
-    async def generate_marketing_prompts(self, item_data: Dict[str, Any], base64_image: str) -> List[Dict[str, str]]:
-        """Generate 5 ultra-memey marketing prompts for FLUX - peak AI slop aesthetic."""
+    async def generate_marketing_prompts(self, item_data: Dict[str, Any], base64_image: str, real_mode: bool = False) -> List[Dict[str, str]]:
+        """Generate 5 marketing prompts for FLUX - either professional or meme-worthy based on mode."""
         
-        prompt = f"""You are a meme lord creating the most absurd, over-the-top product marketing images. 
+        if real_mode:
+            prompt = f"""Generate 5 professional, marketplace-ready FLUX.1 Kontext prompts for a {item_data['item_name']} ({item_data['category']}).
+
+Create prompts that produce:
+- Clean, professional product photography
+- Multiple angles and perspectives  
+- Lifestyle shots showing practical use
+- Detail shots highlighting quality
+- Proper lighting and composition
+- White or neutral backgrounds for main shots
+- Natural settings for lifestyle images
+- Professional e-commerce quality
+
+Item details:
+- Name: {item_data['item_name']}
+- Category: {item_data['category']}
+- Brand: {item_data.get('brand', 'generic')}
+- Key features: {', '.join(item_data.get('key_features', []))}
+
+Return a JSON array with 5 objects, each containing:
+{{
+    "title": "Professional description",
+    "prompt": "Full FLUX prompt for marketplace-ready image",
+    "style": "photography style (e.g., 'studio', 'lifestyle', 'detail')"
+}}
+
+Make each prompt produce clean, professional results suitable for eBay, Facebook Marketplace, etc."""
+        else:
+            prompt = f"""You are a meme lord creating the most absurd, over-the-top product marketing images. 
 Generate 5 FLUX.1 Kontext prompts for a {item_data['item_name']} ({item_data['category']}) that are:
 
 - Completely unhinged and surreal
@@ -176,12 +237,18 @@ Return a JSON array with 5 objects, each containing:
 
 Make each prompt detailed and specific for FLUX.1 Kontext. Go absolutely wild."""
 
+        system_message = (
+            "You are a professional product photographer creating marketplace-ready images. Focus on clean, appealing, and realistic presentations."
+            if real_mode else
+            "You are an expert at creating viral, meme-worthy marketing content. You understand internet culture and how to make absurdist humor work."
+        )
+        
         response = self.client.chat.completions.create(
             model=settings.openai_model,
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert at creating viral, meme-worthy marketing content. You understand internet culture and how to make absurdist humor work."
+                    "content": system_message
                 },
                 {
                     "role": "user",
@@ -200,7 +267,7 @@ Make each prompt detailed and specific for FLUX.1 Kontext. Go absolutely wild.""
                 }
             ],
             max_tokens=2048,
-            temperature=1.2  # Higher temperature for more creative/wild outputs
+            temperature=0.8 if real_mode else 1.2  # Lower temperature for professional, higher for creative
         )
         
         try:
@@ -219,34 +286,63 @@ Make each prompt detailed and specific for FLUX.1 Kontext. Go absolutely wild.""
                 
         except Exception as e:
             print(f"[DEBUG] Error parsing marketing prompts: {str(e)}")
-            # Fallback to generic meme prompts
-            return [
-                {
-                    "title": "Grindset Mindset",
-                    "prompt": f"{item_data['item_name']} floating in space with explosions, dramatic lighting, 'SUCCESS' text in flames, 8k hyperrealistic",
-                    "style": "motivational"
-                },
-                {
-                    "title": "Apocalypse Mode",
-                    "prompt": f"Person using {item_data['item_name']} during zombie apocalypse, determined expression, sunrise through ruins, dramatic composition",
-                    "style": "apocalyptic"
-                },
-                {
-                    "title": "Quantum Dimension",
-                    "prompt": f"{item_data['item_name']} creating portal to another dimension, swirling colors, impossible physics, cinematic lighting",
-                    "style": "surreal"
-                },
-                {
-                    "title": "Celebrity Endorsement Gone Wrong",
-                    "prompt": f"Famous person dramatically using {item_data['item_name']}, paparazzi in background, luxury setting, chaos ensuing",
-                    "style": "celebrity"
-                },
-                {
-                    "title": "Epic Battle",
-                    "prompt": f"{item_data['item_name']} in medieval battle scene, knights cheering, dragon in background, epic movie poster style",
-                    "style": "cinematic"
-                }
-            ]
+            # Fallback prompts based on mode
+            if real_mode:
+                return [
+                    {
+                        "title": "Professional Studio Shot",
+                        "prompt": f"{item_data['item_name']} on white background, professional product photography, studio lighting, high resolution, clean and minimal",
+                        "style": "studio"
+                    },
+                    {
+                        "title": "Lifestyle Context",
+                        "prompt": f"{item_data['item_name']} in modern home setting, natural lighting, tasteful decor, showing actual use case",
+                        "style": "lifestyle"
+                    },
+                    {
+                        "title": "Feature Highlight",
+                        "prompt": f"Close-up detail shot of {item_data['item_name']}, showing quality and craftsmanship, macro photography style",
+                        "style": "detail"
+                    },
+                    {
+                        "title": "Comparison View",
+                        "prompt": f"{item_data['item_name']} shown from multiple angles, clean composition, showing all sides and features",
+                        "style": "multi-angle"
+                    },
+                    {
+                        "title": "Scale Reference",
+                        "prompt": f"{item_data['item_name']} with common objects for size reference, clean background, professional presentation",
+                        "style": "scale"
+                    }
+                ]
+            else:
+                return [
+                    {
+                        "title": "Grindset Mindset",
+                        "prompt": f"{item_data['item_name']} floating in space with explosions, dramatic lighting, 'SUCCESS' text in flames, 8k hyperrealistic",
+                        "style": "motivational"
+                    },
+                    {
+                        "title": "Apocalypse Mode",
+                        "prompt": f"Person using {item_data['item_name']} during zombie apocalypse, determined expression, sunrise through ruins, dramatic composition",
+                        "style": "apocalyptic"
+                    },
+                    {
+                        "title": "Quantum Dimension",
+                        "prompt": f"{item_data['item_name']} creating portal to another dimension, swirling colors, impossible physics, cinematic lighting",
+                        "style": "surreal"
+                    },
+                    {
+                        "title": "Celebrity Endorsement Gone Wrong",
+                        "prompt": f"Famous person dramatically using {item_data['item_name']}, paparazzi in background, luxury setting, chaos ensuing",
+                        "style": "celebrity"
+                    },
+                    {
+                        "title": "Epic Battle",
+                        "prompt": f"{item_data['item_name']} in medieval battle scene, knights cheering, dragon in background, epic movie poster style",
+                        "style": "cinematic"
+                    }
+                ]
     
     async def generate_search_queries(self, item_name: str, brand: Optional[str] = None) -> List[str]:
         """Generate search queries for price research."""
@@ -305,104 +401,3 @@ Keep the same format (TITLE, DESCRIPTION, KEYWORDS) but enhance the description.
         
         return response.choices[0].message.content
     
-    async def generate_marketing_prompts(self, item_data: Dict[str, Any], base64_image: str) -> List[Dict[str, str]]:
-        """Generate 5 ultra-memey marketing prompts for FLUX - peak AI slop aesthetic."""
-        
-        prompt = f"""You are a meme lord creating the most absurd, over-the-top product marketing images. 
-Generate 5 FLUX.1 Kontext prompts for a {item_data['item_name']} ({item_data['category']}) that are:
-
-- Completely unhinged and surreal
-- Mix mundane product use with epic/apocalyptic scenarios  
-- Include popular meme formats and internet culture
-- So extra that they're obviously AI-generated
-- Dramatic lighting, explosions, impossible physics
-- Celebrity/movie references welcome
-- Think "stock photo gone wrong" energy
-- Use cinematic keywords: 8k, hyperrealistic, dramatic lighting, epic composition, octane render
-
-Item details:
-- Name: {item_data['item_name']}
-- Category: {item_data['category']}
-- Brand: {item_data.get('brand', 'generic')}
-- Key features: {', '.join(item_data.get('key_features', []))}
-
-Return a JSON array with 5 objects, each containing:
-{{
-    "title": "Catchy meme title",
-    "prompt": "Full FLUX prompt with all details",
-    "style": "meme style (e.g., 'apocalyptic', 'motivational', 'cinematic')"
-}}
-
-Make each prompt detailed and specific for FLUX.1 Kontext. Go absolutely wild."""
-
-        response = self.client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an expert at creating viral, meme-worthy marketing content. You understand internet culture and how to make absurdist humor work."
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens=2048,
-            temperature=1.2  # Higher temperature for more creative/wild outputs
-        )
-        
-        try:
-            result_text = response.choices[0].message.content
-            print(f"[DEBUG] Marketing prompts response: {result_text}")
-            
-            # Extract JSON
-            start_idx = result_text.find("[")
-            end_idx = result_text.rfind("]") + 1
-            if start_idx != -1 and end_idx > start_idx:
-                json_str = result_text[start_idx:end_idx]
-                prompts = json.loads(json_str)
-                return prompts
-            else:
-                raise ValueError("No JSON array found in response")
-                
-        except Exception as e:
-            print(f"[DEBUG] Error parsing marketing prompts: {str(e)}")
-            # Fallback to generic meme prompts
-            return [
-                {
-                    "title": "Grindset Mindset",
-                    "prompt": f"{item_data['item_name']} floating in space with explosions, dramatic lighting, 'SUCCESS' text in flames, 8k hyperrealistic",
-                    "style": "motivational"
-                },
-                {
-                    "title": "Apocalypse Mode",
-                    "prompt": f"Person using {item_data['item_name']} during zombie apocalypse, determined expression, sunrise through ruins, dramatic composition",
-                    "style": "apocalyptic"
-                },
-                {
-                    "title": "Quantum Dimension",
-                    "prompt": f"{item_data['item_name']} creating portal to another dimension, swirling colors, impossible physics, cinematic lighting",
-                    "style": "surreal"
-                },
-                {
-                    "title": "Celebrity Endorsement Gone Wrong",
-                    "prompt": f"Famous person dramatically using {item_data['item_name']}, paparazzi in background, luxury setting, chaos ensuing",
-                    "style": "celebrity"
-                },
-                {
-                    "title": "Epic Battle",
-                    "prompt": f"{item_data['item_name']} in medieval battle scene, knights cheering, dragon in background, epic movie poster style",
-                    "style": "cinematic"
-                }
-            ]

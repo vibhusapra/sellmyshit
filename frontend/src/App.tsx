@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedSalesBackground from './components/AnimatedSalesBackground';
@@ -7,6 +7,7 @@ import ImageUploader from './components/ImageUploader';
 import ProgressIndicator from './components/ProgressIndicator';
 import ResultsDisplay from './components/ResultsDisplay';
 import ImageVariations from './components/ImageVariations';
+import EnhancementModeSelector from './components/EnhancementModeSelector';
 import { processItem, AnalysisResponse } from './services/api';
 import toast from 'react-hot-toast';
 
@@ -24,6 +25,8 @@ function App() {
   const [results, setResults] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isRealMode, setIsRealMode] = useState(false);
+  const [enhancementMode, setEnhancementMode] = useState<'smart' | 'quick' | 'custom'>('smart');
 
   const handleImagesSelected = async (files: File[]) => {
     setIsLoading(true);
@@ -32,8 +35,7 @@ function App() {
     setUploadedFile(files[0]);
 
     try {
-      // Simulate progress through steps
-      const stepDuration = 2000; // 2 seconds per step
+      const stepDuration = 2000;
       
       // Step 2: Analyzing
       setTimeout(() => setCurrentStep(2), stepDuration);
@@ -41,20 +43,19 @@ function App() {
       // Step 3: Enhancing
       setTimeout(() => setCurrentStep(3), stepDuration * 2);
       
-      // Make the actual API call
-      const response = await processItem(files[0], 'quick');
+      const response = await processItem(files[0], enhancementMode, undefined, isRealMode);
       
       // Step 4: Complete
       setCurrentStep(4);
       setResults(response);
       
       toast.success('Analysis complete! Your listing is ready.');
+      setIsLoading(false);
     } catch (err) {
       console.error('Error uploading images:', err);
       setError('Failed to analyze images. Please try again.');
       toast.error('Something went wrong. Please try again.');
       setCurrentStep(0);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -82,6 +83,45 @@ function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Real Mode Toggle */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-center mb-8"
+              >
+                <div className="glass rounded-lg p-4 flex items-center space-x-4">
+                  <span className={`font-semibold ${!isRealMode ? 'text-cyber-purple' : 'text-gray-400'}`}>
+                    Fun Mode 🎮
+                  </span>
+                  <button
+                    onClick={() => setIsRealMode(!isRealMode)}
+                    className="relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-cyber-purple focus:ring-offset-2 focus:ring-offset-gray-900"
+                    style={{
+                      backgroundColor: isRealMode ? '#8b5cf6' : '#4b5563'
+                    }}
+                  >
+                    <motion.span
+                      layout
+                      className="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg"
+                      animate={{
+                        x: isRealMode ? 26 : 2
+                      }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  </button>
+                  <span className={`font-semibold ${isRealMode ? 'text-cyber-purple' : 'text-gray-400'}`}>
+                    Real Mode 💼
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Enhancement Mode Selector */}
+              <EnhancementModeSelector
+                selectedMode={enhancementMode}
+                onModeChange={setEnhancementMode}
+                disabled={isLoading}
+              />
+
               {isLoading && (
                 <ProgressIndicator steps={progressSteps} currentStep={currentStep} />
               )}
