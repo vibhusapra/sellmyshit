@@ -145,3 +145,22 @@ Keywords: {', '.join(listing['keywords'][:5])}
             """.strip(),
             "category": "General"
         }
+    
+    async def generate_platform_listing(self, 
+                                      item_data: Dict[str, Any], 
+                                      price_data: Dict[str, Any],
+                                      market_insights: Optional[Dict[str, Any]],
+                                      platform: str) -> Dict[str, Any]:
+        """Generate a platform-specific listing."""
+        # First generate the base listing
+        base_listing = await self.generate_listing(item_data, price_data, market_insights)
+        
+        # Return the platform-specific version
+        if platform == "ebay":
+            return self._format_for_ebay(base_listing)
+        elif platform == "craigslist":
+            return self._format_for_craigslist(base_listing)
+        elif platform == "facebook":
+            return self._format_for_facebook(base_listing)
+        else:
+            return base_listing

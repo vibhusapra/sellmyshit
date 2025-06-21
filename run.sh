@@ -32,6 +32,6 @@ if [ ! -f "sellmyshit.db" ]; then
     python -c "from app.database import init_db; init_db()"
 fi
 
-# Run Streamlit
+# Run the application
 echo "Starting Sell My Shit..."
-streamlit run streamlit_app.py
+./run_app.sh

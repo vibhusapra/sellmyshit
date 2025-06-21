@@ -1,11 +1,9 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
-import os
 
 
 class Settings(BaseSettings):
     # API Keys
-    replicate_api_token: str
+    bfl_api_key: str
     openai_api_key: str
     
     # Database
@@ -25,8 +23,10 @@ class Settings(BaseSettings):
         return [ext.strip() for ext in self.allowed_image_extensions.split(',')]
     
     # Model Versions
-    flux_model: str = "black-forest-labs/flux-1.1-pro"  # Still using Replicate for image enhancement
-    openai_model: str = "o1-preview"
+    openai_model: str = "gpt-4.1"  # Using GPT-4.1 model
+    
+    # BFL API Configuration
+    bfl_api_base_url: str = "https://api.bfl.ai/v1"
     
     # Web Scraping
     scrape_timeout: int = 30

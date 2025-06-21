@@ -2,14 +2,14 @@ from PIL import Image
 from io import BytesIO
 import os
 from typing import Tuple, Optional
-from services.replicate_client import ReplicateClient
+from services.bfl_client import BFLClient
 from app.config import settings
 import uuid
 
 
 class ImageEnhancer:
     def __init__(self):
-        self.client = ReplicateClient()
+        self.client = BFLClient()
         self.upload_dir = "uploads"
         self.enhanced_dir = "enhanced"
         
@@ -61,8 +61,9 @@ class ImageEnhancer:
         # Save original image
         original_path = self.save_image(image_data, self.upload_dir)
         
-        # Enhance image using Replicate
-        enhanced_data = await self.client.enhance_image(image_data, enhancement_type)
+        # Enhance image using BFL
+        prompt = "Product on clean white background, professional lighting" if enhancement_type == "background_removal" else "Enhanced product image with improved quality and lighting"
+        enhanced_data = await self.client.generate_image_edit(image_data, prompt)
         
         # Save enhanced image
         enhanced_filename = f"enhanced_{os.path.basename(original_path)}"

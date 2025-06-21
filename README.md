@@ -17,9 +17,9 @@ Upload a photo of any item you want to sell, and our AI will:
 ## Tech Stack
 
 - **Backend**: FastAPI
-- **Frontend**: Streamlit
+- **Frontend**: React with TypeScript
 - **AI Models**: 
-  - OpenAI o1 for multimodal item analysis and text generation
+  - OpenAI GPT-4.1 for multimodal item analysis and text generation
   - Replicate FLUX.1 for image enhancement
 - **Database**: SQLite with SQLAlchemy
 - **Image Processing**: Pillow
@@ -41,27 +41,24 @@ Upload a photo of any item you want to sell, and our AI will:
    ```bash
    cp .env.example .env
    # Edit .env and add your API keys:
-   # - OPENAI_API_KEY for o1 model access
+   # - OPENAI_API_KEY for GPT-4.1 model access
    # - REPLICATE_API_TOKEN for FLUX.1 image enhancement
    ```
 
 4. **Run the application**
-
-   **Option 1: Streamlit UI**
    ```bash
-   streamlit run streamlit_app.py
+   ./run_app.sh
    ```
-
-   **Option 2: FastAPI Backend**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+   
+   This will start both:
+   - Backend API at http://localhost:8000
+   - React frontend at http://localhost:3000
 
 ## Usage
 
-### Streamlit Interface
+### Web Interface
 
-1. Open http://localhost:8501
+1. Open http://localhost:3000
 2. Upload an image of your item
 3. Select enhancement type (background removal or quality enhancement)
 4. Click "Generate Listing"
@@ -98,7 +95,7 @@ sellmyshit/
 │   ├── item_analyzer.py       # Item identification
 │   ├── price_researcher.py    # Market research
 │   └── listing_generator.py   # Content generation
-├── streamlit_app.py    # Streamlit frontend
+├── frontend/          # React frontend
 ├── requirements.txt    # Python dependencies
 └── README.md          # This file
 ```

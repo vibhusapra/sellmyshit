@@ -19,65 +19,77 @@ class OpenAIClient:
     async def analyze_image(self, image_path: str) -> Dict[str, Any]:
         """Analyze image using o1 model to identify item and extract features."""
         
+        print(f"[DEBUG] Starting image analysis for: {image_path}")
+        
         # Encode image to base64
         base64_image = self.encode_image_to_base64(image_path)
+        print(f"[DEBUG] Image encoded to base64, length: {len(base64_image)}")
         
-        prompt = """Analyze this image and provide a detailed JSON response with the following structure:
+        print(f"[DEBUG] Using model: {settings.openai_model}")
+        
+        prompt = """Analyze this image and provide a JSON response with the following structure:
         {
             "item_name": "specific name of the item",
-            "category": "general category (e.g., electronics, furniture, clothing)",
+            "category": "general category",
             "brand": "brand name if visible",
-            "model": "model number or name if applicable", 
             "condition": "new/like new/good/fair/poor",
-            "key_features": ["list", "of", "key", "features"],
-            "color": "primary color",
-            "size": "size if applicable",
-            "material": "material if identifiable",
-            "estimated_age": "approximate age or era",
-            "notable_details": "any special features or defects"
+            "key_features": ["top 3-5 features"]
         }
-        Be as specific and accurate as possible. Return ONLY the JSON object, no additional text."""
+        Be concise and accurate. Return ONLY the JSON object, no additional text."""
         
-        response = self.client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
+        try:
+            response = self.client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}"
+                                }
                             }
-                        }
-                    ]
-                }
-            ],
-            max_tokens=1024,
-            temperature=1
-        )
+                        ]
+                    }
+                ],
+                max_tokens=1024,
+                temperature=1
+            )
+        except Exception as e:
+            print(f"[DEBUG] Error in analyze_image: {str(e)}")
+            raise
         
         # Parse the response
         try:
             result_text = response.choices[0].message.content
+            print(f"[DEBUG] Raw OpenAI response: {result_text}")
+            
             # Try to extract JSON from the response
             start_idx = result_text.find("{")
             end_idx = result_text.rfind("}") + 1
             if start_idx != -1 and end_idx > start_idx:
                 json_str = result_text[start_idx:end_idx]
-                return json.loads(json_str)
-        except:
-            pass
+                print(f"[DEBUG] Extracted JSON: {json_str}")
+                parsed = json.loads(json_str)
+                print(f"[DEBUG] Successfully parsed JSON with keys: {list(parsed.keys())}")
+                return parsed
+            else:
+                print(f"[DEBUG] No JSON found in response")
+        except Exception as e:
+            print(f"[DEBUG] Error parsing response: {type(e).__name__}: {str(e)}")
         
         # Fallback
         return {
             "item_name": "Unknown Item",
             "category": "General",
-            "analysis_text": response.choices[0].message.content
+            "brand": "Unknown",
+            "condition": "unknown",
+            "key_features": []
         }
     
     async def generate_listing(self, item_data: Dict[str, Any], price_data: Dict[str, Any]) -> str:
