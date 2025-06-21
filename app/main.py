@@ -96,15 +96,7 @@ async def process_item(
         image_insights = None
         
         if enhancement_mode == "smart":
-            # Get image insights
-            image_insights = await insights_service.get_image_insights(
-                item_analysis["item_name"],
-                item_analysis["category"],
-                item_analysis.get("brand"),
-                {"suggested_price": 0}  # Placeholder for now
-            )
-            
-            # Generate smart images
+            # Generate smart images with marketing portfolio
             portfolio = await smart_generator.generate_listing_portfolio(
                 image_data,
                 item_analysis,

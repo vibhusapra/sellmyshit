@@ -14,7 +14,7 @@ async def test_process_item():
         "file": ("test_coffee_grinder.jpg", image_data, "image/jpeg")
     }
     data = {
-        "enhancement_mode": "quick"
+        "enhancement_mode": "smart"
     }
     
     # Make request
