@@ -76,7 +76,7 @@ const ImageVariations: React.FC<ImageVariationsProps> = ({ imageFile }) => {
           className="w-full py-4 bg-gradient-to-r from-cyber-purple to-cyber-pink rounded-lg font-cyber font-bold text-lg hover:from-cyber-purple/80 hover:to-cyber-pink/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <SparklesIcon className="w-6 h-6" />
-          Generate 5 Variations with FLUX.1 Kontext
+          Generate 3 Variations with FLUX.1 Kontext
         </motion.button>
       )}
 
@@ -102,7 +102,7 @@ const ImageVariations: React.FC<ImageVariationsProps> = ({ imageFile }) => {
             {/* Loading State */}
             {isGenerating && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(5)].map((_, index) => (
+                {[...Array(3)].map((_, index) => (
                   <div
                     key={index}
                     className="aspect-square bg-gray-800 rounded-lg animate-pulse"
@@ -122,38 +122,55 @@ const ImageVariations: React.FC<ImageVariationsProps> = ({ imageFile }) => {
                     transition={{ delay: index * 0.1 }}
                     className="relative group"
                   >
-                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-cyber-purple/30 neon-border">
-                      {variation.error ? (
-                        <div className="w-full h-full flex items-center justify-center bg-red-900/20">
-                          <p className="text-red-400 text-sm text-center p-4">
-                            Error: {variation.error}
+                    <div className="space-y-3">
+                      <div className="aspect-square rounded-lg overflow-hidden border-2 border-cyber-purple/30 neon-border">
+                        {variation.error ? (
+                          <div className="w-full h-full flex items-center justify-center bg-red-900/20">
+                            <p className="text-red-400 text-sm text-center p-4">
+                              Error: {variation.error}
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <img
+                              src={`http://localhost:8000${variation.url}`}
+                              alt={variation.type}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                              <button
+                                onClick={() => downloadImage(variation)}
+                                className="flex items-center gap-2 px-4 py-2 bg-cyber-purple rounded-lg hover:bg-cyber-purple/80 transition-colors duration-200"
+                              >
+                                <ArrowDownTrayIcon className="w-4 h-4" />
+                                Download
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Variation Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-400 capitalize">
+                            {variation.meme_title || variation.type.replace(/_/g, ' ')}
+                          </p>
+                          {variation.meme_context && (
+                            <span className="px-2 py-1 bg-cyber-purple/20 text-xs rounded-full text-cyber-purple">
+                              {variation.meme_context}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Prompt Display */}
+                        <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                          <p className="text-xs text-gray-300 leading-relaxed">
+                            <span className="text-cyber-purple font-semibold">Prompt:</span> {variation.prompt}
                           </p>
                         </div>
-                      ) : (
-                        <>
-                          <img
-                            src={`http://localhost:8000${variation.url}`}
-                            alt={variation.type}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4">
-                            <p className="text-xs text-gray-300 text-center mb-3">
-                              {variation.prompt}
-                            </p>
-                            <button
-                              onClick={() => downloadImage(variation)}
-                              className="flex items-center gap-2 px-4 py-2 bg-cyber-purple rounded-lg hover:bg-cyber-purple/80 transition-colors duration-200"
-                            >
-                              <ArrowDownTrayIcon className="w-4 h-4" />
-                              Download
-                            </button>
-                          </div>
-                        </>
-                      )}
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm text-gray-400 capitalize">
-                      {variation.type.replace(/_/g, ' ')}
-                    </p>
                   </motion.div>
                 ))}
               </div>

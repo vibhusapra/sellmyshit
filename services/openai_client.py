@@ -33,8 +33,17 @@ class OpenAIClient:
             "category": "general category",
             "brand": "brand name if visible",
             "condition": "new/like new/good/fair/poor",
-            "key_features": ["top 3-5 features"]
+            "key_features": ["top 3-5 features"],
+            "estimated_price": <whole number in USD>
         }
+        
+        For the estimated_price, provide a fair market value based on:
+        - The item type, brand, and model
+        - The condition you observe
+        - Typical used/resale market prices
+        - Consider this is for resale marketplaces like eBay, Facebook Marketplace, etc.
+        
+        Return a realistic price as a whole number (no decimals, no dollar sign).
         Be concise and accurate. Return ONLY the JSON object, no additional text."""
         
         try:

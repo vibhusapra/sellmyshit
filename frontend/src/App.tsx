@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import ParticleBackground from './components/ParticleBackground';
+import AnimatedSalesBackground from './components/AnimatedSalesBackground';
 import HeroSection from './components/HeroSection';
 import ImageUploader from './components/ImageUploader';
 import ProgressIndicator from './components/ProgressIndicator';
@@ -67,10 +67,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-darker-bg relative overflow-hidden">
-      {/* Background effects */}
-      <div className="fixed inset-0 bg-gradient-to-br from-darker-bg via-dark-bg to-darker-bg"></div>
-      <div className="fixed inset-0 grid-pattern opacity-20"></div>
-      <ParticleBackground />
+      {/* Animated sales background */}
+      <AnimatedSalesBackground />
       
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-4 py-12">

@@ -20,6 +20,7 @@ export interface ItemAnalysis {
   color?: string;
   size?: string;
   material?: string;
+  estimated_price?: number;
 }
 
 export interface PriceData {
@@ -29,6 +30,7 @@ export interface PriceData {
   demand_level?: string;
   best_time_to_sell?: string;
   items_found?: number;
+  ai_estimated?: boolean;
 }
 
 export interface MarketInsights {
@@ -196,6 +198,8 @@ export interface ImageVariation {
   prompt: string;
   url: string;
   error: string | null;
+  meme_title?: string;
+  meme_context?: string;
 }
 
 export interface VariationsResponse {

@@ -71,6 +71,17 @@ class ListingGenerator:
         
         avg_price = price_data["avg_price"]
         
+        # If this is an AI estimate, use it directly with minor adjustments
+        if price_data.get("ai_estimated", False):
+            # Just ensure it's a nice round number
+            if avg_price > 100:
+                return round(avg_price / 5) * 5  # Round to nearest $5
+            elif avg_price > 20:
+                return round(avg_price)  # Round to nearest dollar
+            else:
+                return avg_price  # Keep as is for low prices
+        
+        # Original logic for when we have real market data
         # Adjust based on pricing strategy
         if market_insights and market_insights.get("pricing_strategy") == "slightly below market":
             suggested = avg_price * 0.95  # 5% below average

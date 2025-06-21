@@ -125,12 +125,17 @@ async def process_item(
                 "url": f"/image/{os.path.basename(enhanced_path)}"
             }]
         
-        # Step 3: Research prices
-        search_queries = await analyzer.get_search_queries(
-            item_analysis["item_name"],
-            item_analysis.get("brand")
-        )
-        price_data = await researcher.research_prices(search_queries)
+        # Step 3: Use estimated price from OpenAI
+        price_data = {
+            "sources": [],
+            "items_found": 1,
+            "avg_price": float(item_analysis.get("estimated_price", 0)),
+            "min_price": float(item_analysis.get("estimated_price", 0)),
+            "max_price": float(item_analysis.get("estimated_price", 0)),
+            "median_price": float(item_analysis.get("estimated_price", 0)),
+            "price_range": f"${item_analysis.get('estimated_price', 0)}",
+            "ai_estimated": True
+        }
         
         # Step 4: Get market insights
         market_insights = await researcher.get_market_insights(

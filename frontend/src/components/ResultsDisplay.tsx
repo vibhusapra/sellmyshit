@@ -186,7 +186,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
           </div>
           
           <div className="p-4 bg-cyber-purple/10 border border-cyber-purple/30 rounded-lg">
-            <p className="text-sm leading-relaxed">Based on market research of similar items</p>
+            <p className="text-sm leading-relaxed">
+              {results.price_data.ai_estimated ? 
+                "🤖 AI-estimated price based on item analysis" : 
+                "Based on market research of similar items"
+              }
+            </p>
           </div>
           
           <div className="mt-4">
